@@ -3,7 +3,7 @@ let participants = [
     name: "Suelen Salvino",
     email: "suelen@email.com",
     date: new Date(2024, 2, 22, 19, 20),
-    dateCheckIn: new Date(2024, 2, 25, 22, 00)
+    dateCheckIn: null
   },
   {
     name: "João Silva",
@@ -62,31 +62,91 @@ let participants = [
 ];
 
 const createNewParticipant = (participant) => {
-  const date = dayjs(Date.now()).to(participant.date);
-  const dateCheckIn = dayjs(Date.now()).to(participant.dateCheckIn);
+  const date = dayjs(Date.now())
+  .to(participant.date);
+
+  let dateCheckIn = dayjs(Date.now())
+  .to(participant.dateCheckIn);
+  
+  if(participant.dateCheckIn == null) {
+    dateCheckIn = `
+      <button
+        data-email="${participant.email}"
+        onclick="checkIn(event)"
+      >
+        Confirmar check-in
+      </button>
+    `
+  }
 
   return `
   <tr>
-      <td>
-        <strong>
-         ${participant.name}
-       </strong>
-       <small>
-       ${participant.email}
-       </small>
-      </td>
-      <td>${date}</td>
-      <td>${dateCheckIn}</td>
-    </tr>
-    `
+    <td>
+      <strong>
+        ${participant.name}
+      </strong>
+      <br>
+      <small>
+        ${participant.email}
+      </small>
+    </td>
+    <td>${date}</td>
+    <td>${dateCheckIn}</td>
+  </tr>
+  `
 }
 
 const updateList = (participants) => {
-  let output = "";
-  for (let participant of participants) {
-    output += createNewParticipant(participant);
+  let output = ""
+  for(let participant of participants) {
+    output = output + createNewParticipant(participant);
   }
+  
   document.querySelector('tbody').innerHTML = output;
 }
 
 updateList(participants);
+
+const addParticipant = (event) => {
+  event.preventDefault();
+
+  const form = new FormData(event.target);
+
+  const participant = {
+    name: form.get('name'),
+    email: form.get('email'),
+    date: new Date(),
+    dateCheckIn: null  
+  }
+
+  const participantExist = participants.find(
+    (p) => p.email == participant.email
+  );
+
+  if(participantExist) {
+    alert('E-mail já cadastrado!');
+    return
+  }
+
+  participants = [participant, ...participants]
+  updateList(participants);
+
+  event.target.querySelector('[name="name"]').value = ""
+  event.target.querySelector('[name="email"]').value = ""
+}
+
+const checkIn = (event) => {
+  const messageConfirm = 'Tem certeza que deseja fazer o check-in?' 
+
+  if(confirm(messageConfirm) == false) {
+    return
+  }
+
+  const participant = participants.find(
+    (p) => p.email == event.target.dataset.email  
+  );
+  
+  participant.dateCheckIn = new Date()
+
+  updateList(participants);
+}
